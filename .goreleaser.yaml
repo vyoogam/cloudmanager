@@ -3,12 +3,11 @@ version: 2
 
 before:
   hooks:
-    - go mod verify
-    - go test ./...
+    - make ci
 
 builds:
   - id: cloudmanager
-    main: ./main.go
+    main: .
     binary: cloudmanager
     env:
       - CGO_ENABLED=0
@@ -121,7 +120,8 @@ release:
     name: cloudmanager
   draft: false
   prerelease: auto
-  mode: replace
+  mode: keep-existing
+  replace_existing_artifacts: false
   header: |
     ## cloudmanager {{ .Version }}
 

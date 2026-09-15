@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repo="${CLOUDMANAGER_REPO:-vyoogam/cloudmanager}"
-version="${CLOUDMANAGER_VERSION:-v1.0.3}"
+version="${CLOUDMANAGER_VERSION:-latest}"
 mode="${CLOUDMANAGER_INSTALL_MODE:-auto}"
 bin_dir="${CLOUDMANAGER_INSTALL_DIR:-}"
 install_go=0
@@ -15,7 +15,7 @@ Installs CloudManager from a GitHub Release artifact when available, then falls
 back to a source build with go install.
 
 Options:
-  --version v1.0.3       Version to install. Default: v1.0.3
+  --version VERSION     Stable version to install. Default: latest published release
   --bin-dir DIR          Install directory. Default: Homebrew bin, /usr/local/bin, or ~/.local/bin
   --binary               Require a prebuilt release artifact
   --source               Build from source with go install
@@ -81,10 +81,14 @@ case "$mode" in
   *) die "CLOUDMANAGER_INSTALL_MODE must be auto, binary, or source" ;;
 esac
 
-case "$version" in
-  v*) ;;
-  *) version="v${version}" ;;
-esac
+if [[ "$version" == "latest" ]]; then
+  have curl || die "curl is required to resolve the latest release"
+  release_url="$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${repo}/releases/latest")" || die "could not resolve the latest published release"
+  version="${release_url##*/}"
+else
+  version="v${version#v}"
+fi
+[[ "$version" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || die "version must be stable semver like v1.0.3"
 
 if [[ -z "$bin_dir" ]]; then
   if have brew; then
@@ -134,6 +138,11 @@ detect_archive() {
     arm64|aarch64) arch="arm64" ;;
     *) return 1 ;;
   esac
+
+  # GoReleaser combines both supported Mac architectures into one archive.
+  if [[ "$os" == "Darwin" ]]; then
+    arch="all"
+  fi
 
   printf 'cloudmanager_%s_%s.tar.gz\n' "$os" "$arch"
 }
@@ -214,8 +223,5 @@ case "$mode" in
     ;;
 esac
 
-if have cloudmanager; then
-  cloudmanager --version || true
-else
-  log "add ${bin_dir} to PATH if cloudmanager is not found"
-fi
+"${bin_dir}/cloudmanager" --version
+log "ensure ${bin_dir} is on PATH"

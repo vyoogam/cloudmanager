@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ['release/v1']
+  push:
+    branches: ['release/v1', 'dev/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: make ci
+      - name: Validate packaging configuration
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: 'v2.9.0'
+          args: check

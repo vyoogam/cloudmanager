@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+if [[ ! -f web/package.json ]]; then
+  # Older Go-only revisions do not have the pending embedded web UI yet.
+  if [[ -f internal/server/static.go ]]; then
+    echo "Embedded web UI requires web/package.json and its lockfile" >&2
+    exit 1
+  fi
+  echo "No web frontend in this revision"
+  exit 0
+fi
+cd web
+npm ci --no-audit --no-fund
+npm run build
