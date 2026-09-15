@@ -21,6 +21,11 @@ test: web-build test-release
 	go test ./...
 
 ci: test build
+	@if [ -f web/package.json ]; then \
+		git diff --exit-code -- internal/server/static && \
+		test -z "$$(git ls-files --others --exclude-standard -- internal/server/static)" || \
+		{ echo 'Commit rebuilt internal/server/static assets with the web sources.' >&2; exit 1; }; \
+	fi
 
 version:
 	@scripts/build-version

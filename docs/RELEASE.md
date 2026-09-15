@@ -21,8 +21,8 @@ first run `npm ci` and `npm run build`; an embedded server without its frontend
 sources fails. Go-only revisions skip the frontend explicitly.
 
 Commit rebuilt `internal/server/static` assets with web changes so Go module
-source installs work too. The release validator rejects a dirty checkout after
-CI, catching stale committed frontend assets before tagging. Do not commit
+source installs work too. CI rejects changed or untracked embedded assets after
+rebuilding; the release validator also requires a clean checkout. Do not commit
 `node_modules` or TypeScript incremental cache files.
 
 CI runs on work-branch pushes, trunk pushes, and PRs. Protect `release/v1` with

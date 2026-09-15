@@ -147,6 +147,20 @@ print(json.dumps({'draft': state != 'published', 'assets': [{}] if state == 'par
         (self.repo / "internal/server/static.go").touch()
         self.call("scripts/build-web", ok=False)
 
+    def test_ci_rejects_uncommitted_embedded_assets(self):
+        (self.repo / "web").mkdir()
+        (self.repo / "web/package.json").write_text("{}")
+        assets = self.repo / "internal/server/static"
+        assets.mkdir(parents=True)
+        (assets / "index.html").write_text("fresh assets")
+        # Exercise the CI source/artifact consistency gate independently of compilation.
+        self.call("make", "-o", "test", "-o", "build", "ci", ok=False)
+        self.git("add", ".")
+        self.git("commit", "-m", "frontend and assets")
+        self.call("make", "-o", "test", "-o", "build", "ci")
+        (assets / "index.html").write_text("stale committed assets")
+        self.call("make", "-o", "test", "-o", "build", "ci", ok=False)
+
     def test_release_prep_only_updates_version(self):
         self.call("scripts/release", "v1.2.4", ok=False)
         self.git("switch", "-c", "dev/next")
