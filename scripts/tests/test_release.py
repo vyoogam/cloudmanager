@@ -23,7 +23,7 @@ class ReleaseTests(unittest.TestCase):
         self.env = dict(os.environ, GITHUB_REF_NAME="release/v1", GH_STATE="missing",
                         PATH=str(self.fakebin) + os.pathsep + os.environ["PATH"],
                         TEST_CALLS=str(self.calls), PYTHONDONTWRITEBYTECODE="1")
-        for key in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"):
+        for key in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GITHUB_OUTPUT", "GITHUB_ENV"):
             self.env.pop(key, None)
         (self.repo / "scripts").mkdir()
         for name in ("release", "release-tag", "build-version", "build-web", "install"):

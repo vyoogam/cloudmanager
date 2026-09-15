@@ -6,7 +6,8 @@
 - Builds no longer bump VERSION; local builds identify development/dirty revisions. Optional embedded web assets build through npm ci before Go. VERSION is the only release-prep edit.
 - Added CI and offline release-script regressions. Publishing validates, tests, tags and invokes GoReleaser in one serialized manual run. Direct tags do not publish; existing tag targets/published releases cannot be overwritten. Partial drafts require inspection.
 - Fixed latest-published installer resolution, universal macOS archive selection, Bash examples and the malformed Go install command. Documented one trunk and explicitly targeted Dependabot at release/v1.
-- Validation: 11 offline script regressions passed; shell/YAML syntax and diff checks passed. Full Go validation is delegated to PR CI because the local disk is nearly full. GoReleaser remains pinned to 2.9.0 for the existing Homebrew publisher.
+- Updated workflow actions to current v7 releases after CI reported deprecated Node runtimes; isolated test workflow-output files from the host Actions environment.
+- Validation: 11 offline script regressions passed; shell/YAML syntax and diff checks passed. Full Go tests, binary build, and GoReleaser check passed in PR CI at 2353e97; current action-runtime updates are being verified on the final commit. The local disk remains nearly full. GoReleaser remains pinned to 2.9.0 for the existing Homebrew publisher.
 - GitHub default-branch/protection migration and PR CI status are recorded in the completion update. The unrelated local web/API and IP-export work is not part of this release-infrastructure PR.
 
 ## 2026-07-03

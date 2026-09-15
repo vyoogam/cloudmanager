@@ -20,18 +20,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: '22'
       - run: make ci
       - name: Validate packaging configuration
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7.2.3
         with:
           distribution: goreleaser
           version: 'v2.9.0'
