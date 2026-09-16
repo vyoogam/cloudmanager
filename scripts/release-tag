@@ -31,21 +31,21 @@ def main():
         raise RuntimeError("expected stable semver, for example v1.0.3")
     tag = f"v{version}"
     branch = os.environ.get("GITHUB_REF_NAME") or git("branch", "--show-current")
-    if branch != "release/v1":
-        raise RuntimeError("releases must run from release/v1")
+    if branch != "release/stable":
+        raise RuntimeError("releases must run from release/stable")
     if Path("VERSION").read_text().strip() != version:
         raise RuntimeError("requested version does not match the merged VERSION file")
     if git("status", "--porcelain", "--untracked-files=normal"):
         raise RuntimeError("release checkout must be clean; commit rebuilt web assets before releasing")
 
-    git("fetch", "origin", "refs/heads/release/v1:refs/remotes/origin/release/v1", "--tags")
+    git("fetch", "origin", "refs/heads/release/stable:refs/remotes/origin/release/stable", "--tags")
     head = git("rev-parse", "HEAD")
-    run("git", "merge-base", "--is-ancestor", head, "origin/release/v1")
+    run("git", "merge-base", "--is-ancestor", head, "origin/release/stable")
     existing = run("git", "rev-parse", "--verify", f"refs/tags/{tag}^{{commit}}", check=False)
     if existing.returncode == 0 and existing.stdout.strip() != head:
         raise RuntimeError(f"{tag} points to another commit; tags are never moved")
-    if existing.returncode and head != git("rev-parse", "origin/release/v1"):
-        raise RuntimeError("new releases must use the current release/v1 tip; rerun the workflow")
+    if existing.returncode and head != git("rev-parse", "origin/release/stable"):
+        raise RuntimeError("new releases must use the current release/stable tip; rerun the workflow")
     versions = []
     for known in git("tag", "--list", "v*").splitlines():
         if re.fullmatch(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", known):

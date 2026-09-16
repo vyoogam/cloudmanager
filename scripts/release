@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 
 if [[ $# == 1 && ( "$1" == "--help" || "$1" == "-h" ) ]]; then
   echo "Usage: scripts/release <vX.Y.Z>"
-  echo "Updates VERSION on a clean dev/* branch. Review and commit it, then open a PR into release/v1."
+  echo "Updates VERSION on a clean Features/*, fixes/*, or dev/* branch. Review and commit it, then open a PR into release/v1."
   exit 0
 fi
 [[ $# == 1 ]] || { echo "Usage: scripts/release <vX.Y.Z>" >&2; exit 2; }
@@ -13,10 +13,10 @@ version="${1#v}"
   echo "release: expected stable semver, for example v1.0.3" >&2
   exit 2
 }
-[[ "$(git branch --show-current)" == dev/* ]] || {
-  echo "release: prepare releases on a dev/* branch" >&2
-  exit 1
-}
+case "$(git branch --show-current)" in
+  Features/*|fixes/*|dev/*) ;;
+  *) echo "release: prepare releases on a Features/*, fixes/*, or dev/* branch" >&2; exit 1 ;;
+esac
 [[ -z "$(git status --porcelain)" ]] || {
   echo "release: commit or stash your work before preparing a version" >&2
   exit 1

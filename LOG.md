@@ -1,5 +1,12 @@
 # LOG
 
+## 2026-09-16 — Stable branch naming and cleanup
+
+- Adopted `release/stable` as the default and PR/release target, with `Features/*`, `fixes/*`, and `dev/*` work branches. Updated CI, release guards, Dependabot, Homebrew PRs, installer URLs, and contributor documentation.
+- Release preparation accepts all three work-branch prefixes; regressions verify each and reject unrelated branches without edits.
+- Migration preserves PR #12 history, existing review policy, tags, active work, and the GitLab remote. Obsolete branches require ancestry and open-PR checks before deletion.
+- Validation: 11 offline release regressions, Bash syntax, YAML parsing, and diff checks passed. GitHub default is now `release/stable`; PR #11 was retargeted. Full CI and branch cleanup results are recorded in the canonical checkout LOG.md; automation changes require this PR to merge.
+
 ## 2026-09-15 — Build and release repair
 
 - Reconciled `release/v1.0.0` into `release/v1` in an isolated PR branch, preserving both histories.

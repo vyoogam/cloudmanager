@@ -20,7 +20,7 @@ class ReleaseTests(unittest.TestCase):
         self.fakebin = base / "bin"
         self.fakebin.mkdir()
         self.calls = base / "calls"
-        self.env = dict(os.environ, GITHUB_REF_NAME="release/v1", GH_STATE="missing",
+        self.env = dict(os.environ, GITHUB_REF_NAME="release/stable", GH_STATE="missing",
                         PATH=str(self.fakebin) + os.pathsep + os.environ["PATH"],
                         TEST_CALLS=str(self.calls), PYTHONDONTWRITEBYTECODE="1")
         for key in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GITHUB_OUTPUT", "GITHUB_ENV"):
@@ -31,7 +31,7 @@ class ReleaseTests(unittest.TestCase):
         shutil.copy2(ROOT / "Makefile", self.repo / "Makefile")
         (self.repo / "VERSION").write_text("1.2.3\n")
         (self.repo / ".gitignore").write_text("cloudmanager\n")
-        self.git("init", "-b", "release/v1")
+        self.git("init", "-b", "release/stable")
         self.git("config", "user.name", "Release Test")
         self.git("config", "user.email", "release@example.invalid")
         self.git("config", "commit.gpgsign", "false")
@@ -41,7 +41,7 @@ class ReleaseTests(unittest.TestCase):
         remote = base / "remote.git"
         self.call("git", "init", "--bare", str(remote))
         self.git("remote", "add", "origin", str(remote))
-        self.git("push", "-u", "origin", "release/v1")
+        self.git("push", "-u", "origin", "release/stable")
         self.fake("gh", '''#!/usr/bin/env python3
 import json, os, sys
 state = os.environ['GH_STATE']
@@ -102,7 +102,7 @@ print(json.dumps({'draft': state != 'published', 'assets': [{}] if state == 'par
         (self.repo / "change").write_text("new\n")
         self.git("add", "change")
         self.git("commit", "-m", "new commit")
-        self.git("push", "origin", "release/v1")
+        self.git("push", "origin", "release/stable")
         result = self.tag("v1.2.3", "--check", ok=False)
         self.assertIn("another commit", result.stderr)
 
@@ -163,10 +163,16 @@ print(json.dumps({'draft': state != 'published', 'assets': [{}] if state == 'par
 
     def test_release_prep_only_updates_version(self):
         self.call("scripts/release", "v1.2.4", ok=False)
-        self.git("switch", "-c", "dev/next")
-        self.call("scripts/release", "v1.2.4")
-        self.assertEqual(self.git("diff", "--name-only"), "VERSION")
-        self.assertEqual((self.repo / "VERSION").read_text(), "1.2.4\n")
+        for prefix in ("Features", "fixes", "dev"):
+            with self.subTest(prefix=prefix):
+                self.git("switch", "-c", prefix + "/next")
+                self.call("scripts/release", "v1.2.4")
+                self.assertEqual(self.git("diff", "--name-only"), "VERSION")
+                self.assertEqual((self.repo / "VERSION").read_text(), "1.2.4\n")
+                self.git("restore", "VERSION")
+        self.git("switch", "-c", "unrelated/next")
+        self.call("scripts/release", "v1.2.4", ok=False)
+        self.assertEqual(self.git("status", "--porcelain"), "")
 
     def test_installer_uses_latest_published_tag_and_mac_universal_archive(self):
         self.fake("uname", '#!/bin/sh\n[ "$1" = -s ] && echo Darwin || echo arm64\n')

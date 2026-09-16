@@ -2,8 +2,9 @@
 
 ## Contract
 
-- `release/v1` is the only integration/release trunk and the intended GitHub default.
-- `dev/*` branches are short-lived PR branches. Target `release/v1`.
+- `release/stable` is the only integration/release trunk and the GitHub default.
+- `Features/*` adds features, `fixes/*` fixes bugs, and `dev/*` covers other development.
+  These are short-lived PR branches targeting `release/stable`; names are case-sensitive.
 - `vX.Y.Z` tags identify exact versions. Never move published tags.
 - `gh-pages` is reserved for public documentation.
 - GitHub `origin` is the release authority; GitLab is an optional mirror.
@@ -25,9 +26,9 @@ source installs work too. CI rejects changed or untracked embedded assets after
 rebuilding; the release validator also requires a clean checkout. Do not commit
 `node_modules` or TypeScript incremental cache files.
 
-CI runs on work-branch pushes, trunk pushes, and PRs. Protect `release/v1` with
+CI runs on work-branch pushes, trunk pushes, and PRs. Protect `release/stable` with
 an approving review, the required **Build and test** status, up-to-date branches,
-and administrator enforcement. Formula PRs use the same checks and reviews.
+while preserving the repository's existing administrator policy. Formula PRs use the same checks and reviews.
 
 ## Release flow
 
@@ -35,15 +36,15 @@ and administrator enforcement. Formula PRs use the same checks and reviews.
 
    ```bash
    git fetch origin
-   git switch -c dev/release-next origin/release/v1
+   git switch -c dev/release-next origin/release/stable
    scripts/release vX.Y.Z
    ```
 
 2. Review and commit `VERSION`. Push explicitly to `origin`, then open a PR into
-   `release/v1`. In the maintainer's CLOUDMANAGER checkout, run `gituse personal`
+   `release/stable`. In the maintainer's CLOUDMANAGER checkout, run `gituse personal`
    before every push; preserve the GitLab remote.
 3. Merge after review and a green **Build and test** check.
-4. Run **Release Go Module** from `release/v1`, entering the merged version.
+4. Run **Release Go Module** from `release/stable`, entering the merged version.
    Tests cannot be skipped. A direct tag push does not publish a release.
 5. The workflow validates the commit/version and remote release state, runs CI,
    creates or resumes the tag, and invokes GoReleaser in the **same run**. There
@@ -73,11 +74,12 @@ packaging. A dedicated tap is optional, not required for this release repair.
 `mode: keep-existing` preserves notes; `replace_existing_artifacts: false`
 protects assets. These are separate GoReleaser settings.
 
-## Branch migration
+## Branch cleanup
 
-Reconcile `release/v1.0.0` into `release/v1` through a PR before retiring the old
-line; both contain useful changes. Set GitHub's default to `release/v1`, retarget
-open dependency PRs, and require **Build and test** once that check is present.
-The checked-in Dependabot configuration explicitly targets `release/v1`.
-Keep the old release/prep branches until the repaired release is proven. Do not
-remove or move the existing `v1.0.0` and `v1.0.2` tags.
+The old release histories were reconciled in PR #12. `release/stable` replaces
+`release/v1` and the version-named default `release/v1.0.0`.
+Dependabot and Homebrew formula PRs target `release/stable`.
+
+Delete obsolete branches only after their tips are ancestors of `release/stable`
+and they have no open PRs or active worktrees. Keep `gh-pages`, ongoing work,
+and all published tags, including `v1.0.0` and `v1.0.2`.

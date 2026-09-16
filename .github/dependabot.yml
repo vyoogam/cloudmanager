@@ -2,11 +2,11 @@ version: 2
 updates:
   - package-ecosystem: gomod
     directory: /
-    target-branch: release/v1
+    target-branch: release/stable
     schedule:
       interval: weekly
   - package-ecosystem: github-actions
     directory: /
-    target-branch: release/v1
+    target-branch: release/stable
     schedule:
       interval: weekly

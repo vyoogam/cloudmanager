@@ -40,10 +40,10 @@ Use focused branches:
 
 ```bash
 git fetch origin
-git switch -c dev/gcp-vm-location origin/release/v1
+git switch -c fixes/gcp-vm-location origin/release/stable
 ```
 
-Target PRs at `release/v1`, the sole trunk. **Build and test** must pass.
+Target PRs at `release/stable`, the sole trunk. **Build and test** must pass.
 
 Keep PRs scoped. A provider fetcher fix should not also redesign the dashboard.
 A docs update should not carry unrelated generated files.
@@ -87,8 +87,8 @@ the change specifically requires live verification.
 ## Release Changes
 
 `VERSION` is the only manually updated release pin. Run `scripts/release vX.Y.Z`
-on a clean `dev/*` branch, review and commit the change, then open a PR into
-`release/v1`. README and installer use the latest published release rather than
+on a clean `Features/*`, `fixes/*`, or `dev/*` branch, review and commit the change, then open a PR into
+`release/stable`. README and installer use the latest published release rather than
 requiring another version edit. Homebrew checksums are generated from artifacts.
 
 `make ci` runs script regressions, the locked web build when present, Go module
