@@ -1,90 +1,60 @@
 name: Release Go Module
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Stable semver tag to release, for example v1.0.0'
+        description: 'Merged stable version, for example v1.0.3'
         required: true
         type: string
-      skip_tests:
-        description: 'Skip go test ./... before tagging'
-        required: false
-        default: false
-        type: boolean
+
+concurrency:
+  group: cloudmanager-release
+  cancel-in-progress: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   goreleaser:
+    if: github.ref == 'refs/heads/release/v1' && github.repository == 'vyoogam/cloudmanager'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
-
-      - name: Prepare manual release tag
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+      - name: Validate release
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/release-tag "$RELEASE_VERSION" --check
+      - name: Build and test
+        run: make ci
+      - name: Create or resume release tag
+        id: tag
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          raw="${{ inputs.version }}"
-          version="${raw#v}"
-          tag="v${version}"
-          if [[ "${GITHUB_REF_NAME}" != "release/v1" ]]; then
-            echo "manual releases must run from release/v1, got ${GITHUB_REF_NAME}" >&2
-            exit 1
-          fi
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "version must be stable semver like v1.0.0" >&2
-            exit 2
-          fi
-          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q "${tag}"; then
-            echo "tag ${tag} already exists on origin" >&2
-            exit 1
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [[ "${{ inputs.skip_tests }}" != "true" ]]; then
-            GOCACHE="${GOCACHE:-/tmp/go-build-cache}" go test ./...
-          fi
-          test "$(cat VERSION)" = "$version"
-          grep -q "raw.githubusercontent.com/vyoogam/cloudmanager/${tag}/scripts/install" README.md
-          grep -q "go install github.com/vyoogam/cloudmanager@${tag}" README.md
-          grep -q "CLOUDMANAGER_VERSION:-${tag}" scripts/install
-          grep -q -- "--version ${tag}" scripts/install
-          git tag -a "$tag" -m "$tag"
-          git push origin "$tag"
-
-      # The Homebrew formula needs release artifact checksums, so GoReleaser
-      # opens a formula PR instead of pushing to the protected release branch.
-
-      # TODO(packaging): Add Apt / Debian package repository configuration
-      # Setup NFPM in .goreleaser.yaml to generate .deb, then push to PPA or custom repo
-      
-      # TODO(packaging): Add RPM / Yum package publishing
-      # Use NFPM module in GoReleaser to produce .rpm
-
-      # TODO(packaging): Add Snapcraft publishing configuration
-
-      - name: Run GoReleaser
-        if: github.event_name == 'push'
-        uses: goreleaser/goreleaser-action@v6
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          scripts/release-tag "$RELEASE_VERSION"
+      - name: Publish artifacts and Homebrew update
+        uses: goreleaser/goreleaser-action@v7.2.3
         with:
           distribution: goreleaser
           version: 'v2.9.0'
-          args: release --clean
+          args: release --clean --skip=before
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GORELEASER_CURRENT_TAG: ${{ steps.tag.outputs.tag }}

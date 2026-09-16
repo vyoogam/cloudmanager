@@ -20,8 +20,8 @@ or UI changes, open an issue first so the shape is clear.
 ```bash
 git clone https://github.com/vyoogam/cloudmanager.git
 cd cloudmanager
-go test ./...
-go run .
+make ci
+./cloudmanager
 ```
 
 CloudManager uses native provider CLIs where useful. You do not need every cloud
@@ -39,10 +39,11 @@ requires the relevant tool:
 Use focused branches:
 
 ```bash
-git checkout -b fix/gcp-vm-location
-git checkout -b feature/storage-index
-git checkout -b docs/pages-refresh
+git fetch origin
+git switch -c dev/gcp-vm-location origin/release/v1
 ```
+
+Target PRs at `release/v1`, the sole trunk. **Build and test** must pass.
 
 Keep PRs scoped. A provider fetcher fix should not also redesign the dashboard.
 A docs update should not carry unrelated generated files.
@@ -85,16 +86,14 @@ the change specifically requires live verification.
 
 ## Release Changes
 
-Release changes should update all install paths together:
+`VERSION` is the only manually updated release pin. Run `scripts/release vX.Y.Z`
+on a clean `dev/*` branch, review and commit the change, then open a PR into
+`release/v1`. README and installer use the latest published release rather than
+requiring another version edit. Homebrew checksums are generated from artifacts.
 
-- `VERSION`
-- README pinned `go install` command
-- `Formula/cloudmanager.rb`
-- `.goreleaser.yaml` when ownership or release targets change
-- `.github/workflows/release.yml` when release automation changes
-
-Manual releases can be started from GitHub Actions with **Run workflow** on the
-release workflow.
+`make ci` runs script regressions, the locked web build when present, Go module
+verification, the Go tests, and a binary build. Release packaging uses the same
+checks. Follow [docs/RELEASE.md](docs/RELEASE.md) for publishing and recovery.
 
 ## Code Of Conduct
 
