@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 
 if [[ $# == 1 && ( "$1" == "--help" || "$1" == "-h" ) ]]; then
   echo "Usage: scripts/release <vX.Y.Z>"
-  echo "Updates VERSION on a clean Features/*, fixes/*, or dev/* branch. Review and commit it, then open a PR into release/v1."
+  echo "Updates VERSION on a clean Features/*, fixes/*, or dev/* branch. Review and commit it, then open a PR into release/stable."
   exit 0
 fi
 [[ $# == 1 ]] || { echo "Usage: scripts/release <vX.Y.Z>" >&2; exit 2; }
@@ -27,4 +27,4 @@ if git rev-parse --verify "refs/tags/v${version}" >/dev/null 2>&1; then
 fi
 printf '%s\n' "$version" > VERSION
 echo "Prepared VERSION=${version}. Review and commit VERSION, then push your branch explicitly to origin."
-echo "Open a PR into release/v1. After merge, run Release Go Module from release/v1."
+echo "Open a PR into release/stable. After merge, run Release Go Module from release/stable."

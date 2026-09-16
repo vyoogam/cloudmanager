@@ -27,8 +27,8 @@ rebuilding; the release validator also requires a clean checkout. Do not commit
 `node_modules` or TypeScript incremental cache files.
 
 CI runs on work-branch pushes, trunk pushes, and PRs. Protect `release/stable` with
-an approving review, the required **Build and test** status, up-to-date branches,
-while preserving the repository's existing administrator policy. Formula PRs use the same checks and reviews.
+an approving review, the required **Build and test** status, and up-to-date branches.
+Preserve the existing administrator policy. Formula PRs use the same checks and reviews.
 
 ## Release flow
 
