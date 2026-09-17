@@ -1,6 +1,6 @@
 module github.com/vyoogam/cloudmanager
 
-go 1.25.5
+go 1.26.0
 
 require (
 	cloud.google.com/go/bigquery v1.74.0
@@ -31,7 +31,7 @@ require (
 	github.com/muesli/termenv v0.16.0
 	github.com/spf13/viper v1.21.0
 	golang.org/x/oauth2 v0.36.0
-	golang.org/x/sync v0.20.0
+	golang.org/x/sync v0.23.0
 	google.golang.org/api v0.275.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/ini.v1 v1.67.1
