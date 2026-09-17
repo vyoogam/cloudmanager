@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Validate a stable release, then create or resume its immutable tag."""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+
+def run(*args, check=True):
+    result = subprocess.run(args, text=True, capture_output=True)
+    if check and result.returncode:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "command failed")
+    return result
+
+
+def git(*args):
+    return run("git", *args).stdout.strip()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("version")
+    parser.add_argument("--check", action="store_true", help="validate without creating or pushing a tag")
+    args = parser.parse_args()
+    os.chdir(Path(__file__).resolve().parent.parent)
+    version = args.version.removeprefix("v")
+    if not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", version):
+        raise RuntimeError("expected stable semver, for example v1.0.3")
+    tag = f"v{version}"
+    branch = os.environ.get("GITHUB_REF_NAME") or git("branch", "--show-current")
+    if branch != "release/stable":
+        raise RuntimeError("releases must run from release/stable")
+    if Path("VERSION").read_text().strip() != version:
+        raise RuntimeError("requested version does not match the merged VERSION file")
+    if git("status", "--porcelain", "--untracked-files=normal"):
+        raise RuntimeError("release checkout must be clean; commit rebuilt web assets before releasing")
+
+    git("fetch", "origin", "refs/heads/release/stable:refs/remotes/origin/release/stable", "--tags")
+    head = git("rev-parse", "HEAD")
+    run("git", "merge-base", "--is-ancestor", head, "origin/release/stable")
+    existing = run("git", "rev-parse", "--verify", f"refs/tags/{tag}^{{commit}}", check=False)
+    if existing.returncode == 0 and existing.stdout.strip() != head:
+        raise RuntimeError(f"{tag} points to another commit; tags are never moved")
+    if existing.returncode and head != git("rev-parse", "origin/release/stable"):
+        raise RuntimeError("new releases must use the current release/stable tip; rerun the workflow")
+    versions = []
+    for known in git("tag", "--list", "v*").splitlines():
+        if re.fullmatch(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", known):
+            versions.append(tuple(map(int, known[1:].split("."))))
+    if versions and tuple(map(int, version.split("."))) < max(versions):
+        raise RuntimeError("refusing a release older than an existing stable tag")
+
+    repo = os.environ.get("GITHUB_REPOSITORY", "vyoogam/cloudmanager")
+    release = run("gh", "api", f"repos/{repo}/releases/tags/{tag}", check=False)
+    if release.returncode == 0:
+        data = json.loads(release.stdout)
+        if not data.get("draft", False):
+            raise RuntimeError(f"{tag} is already published; release a new patch instead")
+        if data.get("assets"):
+            raise RuntimeError(f"{tag} has a partial draft with assets; inspect it before retrying")
+    elif "(HTTP 404)" not in release.stderr:
+        raise RuntimeError(f"cannot verify GitHub release state: {release.stderr.strip()}")
+
+    if args.check:
+        print(f"Validated {tag} at {head}")
+        return
+    if existing.returncode:
+        git("tag", "-a", tag, "-m", tag)
+    git("push", "origin", f"refs/tags/{tag}")
+    # GoReleaser now sees an exact tag even though this is a dispatch run.
+    git("checkout", "--detach", tag)
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            output.write(f"tag={tag}\n")
+    print(f"Ready to publish {tag} at {head}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (RuntimeError, OSError, ValueError) as exc:
+        print(f"release: {exc}", file=sys.stderr)
+        sys.exit(1)

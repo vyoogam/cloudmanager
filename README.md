@@ -132,86 +132,60 @@ terminal workflow, active context, audit path, and provider-aware guardrails.
 
 ## Installation
 
-Fast install:
+Fast install (latest published release):
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/v1.0.3/scripts/install | sh
+curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/release/stable/scripts/install | bash
 ```
 
-The installer prefers a prebuilt GitHub Release artifact. If no artifact exists
-for the requested OS/architecture yet, it falls back to `go install`.
-
-To force a source build and let Homebrew install Go when Go is missing:
+The installer resolves one published version, downloads the matching archive,
+verifies its checksum, and installs it. On macOS it uses the universal archive.
+Pass `--version vX.Y.Z` to pin a release, `--binary` to require a prebuilt binary,
+or `--source --install-go` to build with Go (and install Go through Homebrew when needed).
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/v1.0.3/scripts/install | sh -s -- --source --install-go
+curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/release/stable/scripts/install | bash -s -- --source --install-go
 ```
 
-Go install fallback:
+Go module install (latest module tag, which can precede release publication):
 
 ```bash
-go install github.com/vyoogam/cloudmanager1.0.3
+go install github.com/vyoogam/cloudmanager@latest
 ```
 
-`go install` builds from source using the user's Go toolchain. It does not use
-prebuilt GitHub Release artifacts.
-
-From source:
+From source (Go, Make, Python 3, and Node.js 22 when `web/` is present):
 
 ```bash
 git clone https://github.com/vyoogam/cloudmanager.git
 cd cloudmanager
-go build -o cloudmanager .
+make build
 ```
 
-Homebrew tap:
+`make build` rebuilds any embedded web assets with `npm ci`, then builds Go.
+It never changes `VERSION`. Untagged or modified builds show a development suffix.
+
+Homebrew:
 
 ```bash
 brew tap vyoogam/cloudmanager https://github.com/vyoogam/cloudmanager
 brew install cloudmanager
 ```
 
-The Homebrew formula builds from source with Homebrew-managed Go. If Go is not
-installed, Homebrew installs it as a build dependency. The formula sets
-`CGO_ENABLED=0` so users do not need Clang just to build CloudManager.
+The generated formula installs release binaries. Formula updates arrive as PRs
+with checksums from the corresponding release assets.
 
 ### Release Automation
 
-Release branches are simple:
+Use `release/stable` as the sole integration/release trunk and short-lived `Features/*`, `fixes/*`, or `dev/*`
+branches for changes. Exact versions are tags. PRs must pass **Build and test**.
 
-- develop on `dev/*`
-- merge release PRs into `release/v1`
-- publish exact versions as tags, such as `v1.0.2`
+Prepare `VERSION` with `scripts/release vX.Y.Z`, review and commit that change,
+and merge its PR into `release/stable`. Then run **Release Go Module** from
+`release/stable` with the same version. That single run validates, builds, tests,
+tags, and publishes. Published releases and existing tag targets are preserved.
 
-Protected releases use a two-step flow:
-
-1. Prepare a release PR from a dev branch:
-
-   ```bash
-   git switch -c dev/release-v1.0.2
-   scripts/release v1.0.2 --push
-   ```
-
-2. Open a PR into `release/v1`.
-3. Merge the PR.
-4. Open **Actions** in GitHub.
-5. Select **Release Go Module**.
-6. Click **Run workflow**.
-7. Enter the same stable version, such as `v1.0.2`.
-8. Run it from `release/v1`.
-
-The workflow refuses to tag from any other branch. It runs tests, verifies the
-merged release pins, creates the annotated tag, and pushes only the tag. The tag
-push triggers GoReleaser to publish GitHub release artifacts. GoReleaser opens a
-PR for the generated Homebrew formula because that file needs release artifact
-checksums.
-
-Branch rules:
-
-- protect `main` and `release/v1`
-- do not push directly to protected branches
-- delete `dev/*` branches after merge
-- keep `gh-pages` for docs only
+See [the release guide](docs/RELEASE.md) for the complete flow, recovery rules,
+and repository migration status.
 
 ### Prerequisites
 CloudManager wraps the native CLI tools for the respective cloud providers. Ensure you have the following installed and authenticated if you intend to manage resources in those clouds:

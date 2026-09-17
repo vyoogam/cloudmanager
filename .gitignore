@@ -44,3 +44,9 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+web/node_modules/
+
+web/*.tsbuildinfo
+
+__pycache__/
