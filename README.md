@@ -135,7 +135,7 @@ terminal workflow, active context, audit path, and provider-aware guardrails.
 Fast install (latest published release):
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/release/v1/scripts/install | bash
+curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/release/stable/scripts/install | bash
 ```
 
 The installer resolves one published version, downloads the matching archive,
@@ -144,7 +144,7 @@ Pass `--version vX.Y.Z` to pin a release, `--binary` to require a prebuilt binar
 or `--source --install-go` to build with Go (and install Go through Homebrew when needed).
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/release/v1/scripts/install | bash -s -- --source --install-go
+curl -sSfL https://raw.githubusercontent.com/vyoogam/cloudmanager/release/stable/scripts/install | bash -s -- --source --install-go
 ```
 
 Go module install (latest module tag, which can precede release publication):
@@ -176,12 +176,12 @@ with checksums from the corresponding release assets.
 
 ### Release Automation
 
-Use `release/v1` as the sole integration/release trunk and short-lived `dev/*`
+Use `release/stable` as the sole integration/release trunk and short-lived `Features/*`, `fixes/*`, or `dev/*`
 branches for changes. Exact versions are tags. PRs must pass **Build and test**.
 
 Prepare `VERSION` with `scripts/release vX.Y.Z`, review and commit that change,
-and merge its PR into `release/v1`. Then run **Release Go Module** from
-`release/v1` with the same version. That single run validates, builds, tests,
+and merge its PR into `release/stable`. Then run **Release Go Module** from
+`release/stable` with the same version. That single run validates, builds, tests,
 tags, and publishes. Published releases and existing tag targets are preserved.
 
 See [the release guide](docs/RELEASE.md) for the complete flow, recovery rules,

@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: ['release/v1']
+    branches: ['release/stable']
   push:
-    branches: ['release/v1', 'dev/**']
+    branches: ['release/stable', 'Features/**', 'fixes/**', 'dev/**']
   workflow_dispatch:
 
 permissions:
