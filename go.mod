@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.73.0
 	github.com/aws/aws-sdk-go-v2/service/computeoptimizer v1.49.8
 	github.com/aws/aws-sdk-go-v2/service/costexplorer v1.63.5
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.336.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.338.1
 	github.com/aws/aws-sdk-go-v2/service/eks v1.82.0
 	github.com/aws/aws-sdk-go-v2/service/rds v1.117.1
 	github.com/charmbracelet/bubbles v1.0.0
