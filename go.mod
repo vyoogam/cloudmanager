@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	cloud.google.com/go/bigquery v1.79.0
-	cloud.google.com/go/monitoring v1.30.0
+	cloud.google.com/go/monitoring v1.31.0
 	cloud.google.com/go/recommender v1.19.0
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1
